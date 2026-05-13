@@ -22,9 +22,34 @@ type command struct {
 	Z      int    `json:"z"`
 }
 
+const usageText = `goberzurg — display images in the terminal
+
+Usage:
+  goberzurg [flags] <path> [x] [y] [width] [height]
+  goberzurg [flags]              (reads JSON/text commands from stdin)
+
+Positional arguments:
+  path                   Path to image file
+  x                      Column position (default: 0)
+  y                      Row position (default: 0)
+  width                  Width in character cells (default: 0 = auto)
+  height                 Height in character cells (default: 0 = auto)
+
+Flags:`
+
 func main() {
-	listBackends := flag.Bool("list-backends", false, "List available backends")
+	listBackends := flag.Bool("list-backends", false, "List available backends and exit")
 	useBackend := flag.String("backend", "", "Force a specific backend (kitty, sixel, iterm2)")
+	flag.Usage = func() {
+		fmt.Fprint(os.Stderr, usageText)
+		fmt.Fprint(os.Stderr, "\n")
+		flag.PrintDefaults()
+		fmt.Fprint(os.Stderr, "\nStdin protocol (JSON or text):\n")
+		fmt.Fprint(os.Stderr, "  {\"action\":\"add\",\"path\":\"img.png\",\"x\":5,\"y\":2,\"width\":40,\"height\":30}\n")
+		fmt.Fprint(os.Stderr, "  add img.png 5 2 40 30\n")
+		fmt.Fprint(os.Stderr, "  clear\n")
+		fmt.Fprint(os.Stderr, "  quit\n")
+	}
 	flag.Parse()
 
 	if *listBackends {
@@ -45,7 +70,8 @@ func main() {
 		case "iterm2":
 			b = goberzurg.NewIterm2Backend()
 		default:
-			fmt.Fprintf(os.Stderr, "unknown backend: %s\n", *useBackend)
+			fmt.Fprintf(os.Stderr, "error: unknown backend %q\n", *useBackend)
+			fmt.Fprintf(os.Stderr, "available: kitty, sixel, iterm2\n")
 			os.Exit(1)
 		}
 		r = goberzurg.New(goberzurg.WithBackend(b))
@@ -57,14 +83,8 @@ func main() {
 	if flag.NArg() > 0 {
 		args := flag.Args()
 		path := args[0]
-		x := 0
-		y := 0
-		w := 0
-		h := 0
+		x, y, w, h := 0, 0, 0, 0
 
-		if n := len(args); n > 0 {
-			path = args[0]
-		}
 		if len(args) > 1 {
 			x, _ = strconv.Atoi(args[1])
 		}
@@ -127,7 +147,6 @@ func main() {
 			)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
-				_ = 0
 			}
 		case "clear", "remove":
 			r.Clear()

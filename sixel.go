@@ -23,11 +23,17 @@ func (s *SixelBackend) Display(key string, img *Image, opts Options) error {
 	if s.closed {
 		return nil
 	}
-	if img.Decoded == nil {
+
+	scaled, err := ScaleToCells(img, opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+	if scaled.Decoded == nil {
 		return fmt.Errorf("sixel backend requires a decodable image")
 	}
-	sixelData := encodeSixel(img.Decoded)
-	_, err := fmt.Fprintf(s.w, "\x1bPq%s\x1b\\", sixelData)
+
+	sixelData := encodeSixel(scaled.Decoded)
+	_, err = fmt.Fprintf(s.w, "\x1bPq%s\x1b\\", sixelData)
 	return err
 }
 

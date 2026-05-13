@@ -23,8 +23,13 @@ func (i *Iterm2Backend) Display(key string, img *Image, opts Options) error {
 		return nil
 	}
 
+	scaled, err := ScaleToCells(img, opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+
 	var name string
-	switch img.Format {
+	switch scaled.Format {
 	case "png":
 		name = "image.png"
 	case "jpeg", "jpg":
@@ -35,9 +40,9 @@ func (i *Iterm2Backend) Display(key string, img *Image, opts Options) error {
 		name = "image"
 	}
 
-	b64 := base64.StdEncoding.EncodeToString(img.Data)
-	_, err := fmt.Fprintf(i.w, "\x1b]1337;File=inline=1;size=%d;name=%s:%s\x07",
-		len(img.Data), name, b64)
+	b64 := base64.StdEncoding.EncodeToString(scaled.Data)
+	_, err = fmt.Fprintf(i.w, "\x1b]1337;File=inline=1;size=%d;name=%s:%s\x07",
+		len(scaled.Data), name, b64)
 
 	if opts.Y > 0 && opts.X == 0 {
 		fmt.Fprintf(i.w, "\x1b[%dB", opts.Y)

@@ -175,6 +175,40 @@ func TestKittyBackendClear(t *testing.T) {
 	}
 }
 
+func TestKittyBackendResize(t *testing.T) {
+	var buf bytes.Buffer
+	b := &KittyBackend{w: &buf, imageIDs: make(map[string]uint32), nextID: 1}
+
+	pngData, _, _ := makeTestPNG(t)
+	decoded, _, _ := image.Decode(bytes.NewReader(pngData))
+	img := &Image{Width: 10, Height: 10, Format: "png", Data: pngData, Decoded: decoded}
+
+	err := b.Display("img", img, Options{Pos: Pos{X: 5, Y: 3}, Size: Size{Width: 40, Height: 30}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+
+	if !strings.Contains(out, "s=400") {
+		t.Fatalf("expected source width s=400 (40 cells * 10 px), got: %s", out)
+	}
+	if !strings.Contains(out, "v=300") {
+		t.Fatalf("expected source height v=300 (30 cells * 10 px), got: %s", out)
+	}
+	// position still passed through the place command
+	if !strings.Contains(out, "c=5") {
+		t.Fatal("expected c=5 column position")
+	}
+	if !strings.Contains(out, "r=3") {
+		t.Fatal("expected r=3 row position")
+	}
+	// w/h not sent in place command since data is already resized
+	if strings.Contains(out, ",w=") {
+		t.Fatal("w should not be in the place command (data is pre-scaled)")
+	}
+}
+
 func TestIterm2Backend(t *testing.T) {
 	var buf bytes.Buffer
 	b := &Iterm2Backend{w: &buf}
@@ -318,6 +352,89 @@ func TestRendererName(t *testing.T) {
 	defer r.Close()
 	if r.Name() != "kitty" {
 		t.Fatalf("Name() = %s, want kitty", r.Name())
+	}
+}
+
+func TestScaleToCells(t *testing.T) {
+	pngData, w, h := makeTestPNG(t)
+	decoded, _, _ := image.Decode(bytes.NewReader(pngData))
+	img := &Image{Width: w, Height: h, Format: "png", Data: pngData, Decoded: decoded}
+
+	scaled, err := ScaleToCells(img, 20, 15)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if scaled.Width != 200 {
+		t.Fatalf("expected width 200 (20 cells * 10 px), got %d", scaled.Width)
+	}
+	if scaled.Height != 150 {
+		t.Fatalf("expected height 150 (15 cells * 10 px), got %d", scaled.Height)
+	}
+	if scaled.Decoded == nil {
+		t.Fatal("scaled image should be decodable")
+	}
+}
+
+func TestScaleToCellsNoResize(t *testing.T) {
+	pngData, w, h := makeTestPNG(t)
+	decoded, _, _ := image.Decode(bytes.NewReader(pngData))
+	img := &Image{Width: w, Height: h, Format: "png", Data: pngData, Decoded: decoded}
+
+	scaled, err := ScaleToCells(img, 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if scaled != img {
+		t.Fatal("ScaleToCells with 0,0 should return original")
+	}
+}
+
+func TestScaleToCellsOnlyWidth(t *testing.T) {
+	pngData, w, h := makeTestPNG(t)
+	decoded, _, _ := image.Decode(bytes.NewReader(pngData))
+	img := &Image{Width: w, Height: h, Format: "png", Data: pngData, Decoded: decoded}
+
+	scaled, err := ScaleToCells(img, 20, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if scaled.Width != 200 {
+		t.Fatalf("expected width 200, got %d", scaled.Width)
+	}
+	if scaled.Height != 200 {
+		t.Fatalf("expected auto height 200 to preserve ratio (original was square), got %d", scaled.Height)
+	}
+}
+
+func TestSixelBackendResize(t *testing.T) {
+	var buf bytes.Buffer
+	b := &SixelBackend{w: &buf}
+
+	pngData, _, _ := makeTestPNG(t)
+	decoded, _, _ := image.Decode(bytes.NewReader(pngData))
+	img := &Image{Width: 10, Height: 10, Format: "png", Data: pngData, Decoded: decoded}
+
+	err := b.Display("img", img, Options{Size: Size{Width: 5, Height: 5}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.HasPrefix(out, "\x1bPq") {
+		t.Fatal("sixel output should start with DCS")
+	}
+	if !strings.Contains(out, "#") {
+		t.Fatal("sixel output should contain color definitions")
+	}
+}
+
+func TestSixelBackendResizeWithoutDecoded(t *testing.T) {
+	var buf bytes.Buffer
+	b := &SixelBackend{w: &buf}
+	img := &Image{Width: 10, Height: 10, Data: []byte{0, 1, 2}}
+
+	err := b.Display("img", img, Options{Size: Size{Width: 5, Height: 5}})
+	if err == nil {
+		t.Fatal("expected error when no Decoded image available")
 	}
 }
 

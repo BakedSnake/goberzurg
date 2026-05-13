@@ -33,20 +33,30 @@ func (k *KittyBackend) Display(key string, img *Image, opts Options) error {
 		return nil
 	}
 
+	scaled, err := ScaleToCells(img, opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+
+	cacheKey := key
+	if opts.Width > 0 || opts.Height > 0 {
+		cacheKey = fmt.Sprintf("%s:%dx%d", key, opts.Width, opts.Height)
+	}
+
 	k.mu.Lock()
 	if k.imageIDs == nil {
 		k.imageIDs = make(map[string]uint32)
 	}
-	id, exists := k.imageIDs[key]
+	id, exists := k.imageIDs[cacheKey]
 	if !exists {
 		id = k.nextID
 		k.nextID++
-		k.imageIDs[key] = id
+		k.imageIDs[cacheKey] = id
 	}
 	k.mu.Unlock()
 
 	if !exists {
-		if err := k.transmit(id, img); err != nil {
+		if err := k.transmit(id, scaled); err != nil {
 			return err
 		}
 	}
@@ -98,12 +108,6 @@ func (k *KittyBackend) place(id uint32, opts Options) error {
 	}
 	if opts.Y != 0 {
 		parts = append(parts, fmt.Sprintf("r=%d", opts.Y))
-	}
-	if opts.Width != 0 {
-		parts = append(parts, fmt.Sprintf("w=%d", opts.Width))
-	}
-	if opts.Height != 0 {
-		parts = append(parts, fmt.Sprintf("h=%d", opts.Height))
 	}
 	if opts.ZIndex != 0 {
 		parts = append(parts, fmt.Sprintf("z=%d", opts.ZIndex))
