@@ -133,8 +133,8 @@ func TestKittyBackendTransmit(t *testing.T) {
 	if !strings.HasPrefix(out, "\x1b_G") {
 		t.Fatalf("output does not start with ESC_G: %q", out[:min(len(out), 20)])
 	}
-	if !strings.Contains(out, "a=T") {
-		t.Fatal("output missing a=T (transmit)")
+	if !strings.Contains(out, "a=t") {
+		t.Fatal("output missing a=t (transmit)")
 	}
 	if !strings.Contains(out, "a=p") {
 		t.Fatal("output missing a=p (place)")
@@ -283,7 +283,7 @@ func TestRendererDisplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "a=T") {
+	if !strings.Contains(buf.String(), "a=t") {
 		t.Fatal("expected transmit command")
 	}
 }

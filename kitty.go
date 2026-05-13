@@ -76,7 +76,7 @@ func (k *KittyBackend) transmit(id uint32, img *Image) error {
 
 	b64 := base64.StdEncoding.EncodeToString(pngData)
 
-	payload := fmt.Sprintf("a=T,i=%d,f=100,t=d,s=%d,v=%d,q=1",
+	payload := fmt.Sprintf("a=t,i=%d,f=100,t=d,s=%d,v=%d,q=1",
 		id, img.Width, img.Height)
 
 	if len(b64) <= kittyChunkSize {
