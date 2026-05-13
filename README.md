@@ -4,10 +4,11 @@ A Go library for displaying images in terminal emulators, inspired by [ueberzug]
 
 ## Features
 
-- **Kitty protocol** (kitty, wezterm, ghostty) — transmit-once, place-many
+- **Kitty protocol** (kitty, wezterm, ghostty)
 - **Sixel** (xterm, mlterm, foot)
 - **iTerm2 inline images** (iTerm2)
 - **Auto-detection** — picks the right backend from `$TERM`, `$TERM_PROGRAM`, `$KITTY_WINDOW_ID`
+- **Programmatic image scaling** — resizing works identically across all backends (nearest-neighbor or bilinear)
 - **bubbletea compatible** — backends write directly to `os.Stdout`
 - **Zero external dependencies** — pure Go standard library
 
@@ -57,8 +58,8 @@ func main() {
     defer r.Close()
 
     r.Display("photo.png",
-        goberzurg.WithPos(5, 2),
-        goberzurg.WithSize(40, 30),
+        goberzurg.WithPos(5, 2),       // column, row
+        goberzurg.WithSize(40, 30),    // width, height in character cells
     )
 }
 ```
@@ -113,7 +114,7 @@ Display an image at position (column, row):
 goberzurg photo.png 5 2
 ```
 
-With width and height:
+With width and height (in character cells):
 
 ```sh
 goberzurg photo.png 5 2 40 30
@@ -155,12 +156,14 @@ Commands: `add` / `display`, `clear` / `remove`, `quit` / `exit`.
 
 Detection priority: `$KITTY_WINDOW_ID` → `$TERM_PROGRAM` → `$TERM` (sixel/xterm keywords) → Kitty (fallback).
 
+Sizing (width, height) is handled programmatically in Go — images are scaled before being passed to any backend. This means `WithSize(40, 30)` produces the same result on every backend regardless of terminal protocol capabilities.
+
 ## Summary
 
 | File | Purpose |
 |------|---------|
 | `goberzurg.go` | Core types (`Pos`, `Size`, `Options`, `Option` funcs) |
-| `image.go` | Image loading, format detection, PNG/JPEG encoding |
+| `image.go` | Image loading, format detection, PNG/JPEG encoding, `ScaleToCells()` |
 | `renderer.go` | `Backend` interface, `Renderer` high-level API |
 | `kitty.go` | Kitty terminal protocol backend |
 | `sixel.go` | Sixel graphics backend |
