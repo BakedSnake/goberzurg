@@ -76,7 +76,7 @@ func (k *KittyBackend) transmit(id uint32, img *Image) error {
 
 	b64 := base64.StdEncoding.EncodeToString(pngData)
 
-	payload := fmt.Sprintf("a=T,i=%d,f=100,t=d,s=%d,v=%d",
+	payload := fmt.Sprintf("a=T,i=%d,f=100,t=d,s=%d,v=%d,q=1",
 		id, img.Width, img.Height)
 
 	if len(b64) <= kittyChunkSize {
@@ -113,7 +113,7 @@ func (k *KittyBackend) place(id uint32, opts Options) error {
 		parts = append(parts, fmt.Sprintf("z=%d", opts.ZIndex))
 	}
 
-	cmd := fmt.Sprintf("a=p,i=%d", id)
+	cmd := fmt.Sprintf("a=p,i=%d,q=1", id)
 	if len(parts) > 0 {
 		cmd += "," + join(parts, ",")
 	}
