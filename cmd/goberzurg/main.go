@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"goberzurg"
+	"github.com/bakedsnake/goberzurg"
 )
 
 type command struct {
