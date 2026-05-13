@@ -25,6 +25,24 @@ go build ./...
 go build -o goberzurg ./cmd/goberzurg/
 ```
 
+### Tests
+
+```sh
+go test ./...
+```
+
+With race detector:
+
+```sh
+go test -race ./...
+```
+
+Verbose output:
+
+```sh
+go test -v ./...
+```
+
 ## Usage (library)
 
 ```go
