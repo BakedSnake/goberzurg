@@ -103,12 +103,7 @@ func (k *KittyBackend) transmit(id uint32, img *Image) error {
 func (k *KittyBackend) place(id uint32, opts Options) error {
 	var parts []string
 
-	if opts.X != 0 {
-		parts = append(parts, fmt.Sprintf("c=%d", opts.X))
-	}
-	if opts.Y != 0 {
-		parts = append(parts, fmt.Sprintf("r=%d", opts.Y))
-	}
+	parts = append(parts, "C=1")
 	if opts.ZIndex != 0 {
 		parts = append(parts, fmt.Sprintf("z=%d", opts.ZIndex))
 	}
@@ -117,7 +112,11 @@ func (k *KittyBackend) place(id uint32, opts Options) error {
 	if len(parts) > 0 {
 		cmd += "," + join(parts, ",")
 	}
-	fmt.Fprintf(k.w, "\x1b_G%s\x1b\\", cmd)
+
+	// The Kitty protocol places images at the cursor position.
+	// Move cursor to (Y, X) before placing (ANSI CUP is 1-indexed: row, col).
+	fmt.Fprintf(k.w, "\x1b7\x1b[%d;%dH\x1b_G%s\x1b\\\x1b8",
+		opts.Y+1, opts.X+1, cmd)
 
 	return nil
 }

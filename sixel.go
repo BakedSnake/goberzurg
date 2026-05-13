@@ -33,7 +33,9 @@ func (s *SixelBackend) Display(key string, img *Image, opts Options) error {
 	}
 
 	sixelData := encodeSixel(scaled.Decoded)
-	_, err = fmt.Fprintf(s.w, "\x1bPq%s\x1b\\", sixelData)
+	// Move cursor to position (Y, X) before rendering sixel
+	fmt.Fprintf(s.w, "\x1b7\x1b[%d;%dH\x1bPq%s\x1b\\\x1b8",
+		opts.Y+1, opts.X+1, sixelData)
 	return err
 }
 

@@ -196,12 +196,22 @@ func TestKittyBackendResize(t *testing.T) {
 	if !strings.Contains(out, "v=300") {
 		t.Fatalf("expected source height v=300 (30 cells * 10 px), got: %s", out)
 	}
-	// position still passed through the place command
-	if !strings.Contains(out, "c=5") {
-		t.Fatal("expected c=5 column position")
+	// position is set via cursor movement, not c/r parameters
+	if !strings.Contains(out, "\x1b[4;6H") {
+		t.Fatal("expected cursor move to row 4 col 6 (Y+1=4, X+1=6)")
 	}
-	if !strings.Contains(out, "r=3") {
-		t.Fatal("expected r=3 row position")
+	if !strings.Contains(out, "C=1") {
+		t.Fatal("expected C=1 to prevent cursor movement after placement")
+	}
+	if !strings.Contains(out, "a=p") {
+		t.Fatal("expected a=p place command")
+	}
+	// c/r should NOT be used for position
+	if strings.Contains(out, ",c=") {
+		t.Fatal("c should not be in the place command (not a position parameter)")
+	}
+	if strings.Contains(out, ",r=") {
+		t.Fatal("r should not be in the place command (not a position parameter)")
 	}
 	// w/h not sent in place command since data is already resized
 	if strings.Contains(out, ",w=") {
@@ -219,11 +229,14 @@ func TestIterm2Backend(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	if !strings.HasPrefix(out, "\x1b]1337;") {
-		t.Fatal("iterm2 output should start with OSC 1337")
+	if !strings.Contains(out, "\x1b]1337;") {
+		t.Fatal("iterm2 output should contain OSC 1337")
 	}
 	if !strings.Contains(out, "File=inline=1") {
 		t.Fatal("missing File=inline=1")
+	}
+	if !strings.Contains(out, "\x1b[1;1H") {
+		t.Fatal("missing cursor positioning sequence")
 	}
 }
 
@@ -419,11 +432,14 @@ func TestSixelBackendResize(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	if !strings.HasPrefix(out, "\x1bPq") {
-		t.Fatal("sixel output should start with DCS")
+	if !strings.Contains(out, "\x1bPq") {
+		t.Fatal("sixel output should contain DCS")
 	}
 	if !strings.Contains(out, "#") {
 		t.Fatal("sixel output should contain color definitions")
+	}
+	if !strings.Contains(out, "\x1b[1;1H") {
+		t.Fatal("missing cursor positioning sequence")
 	}
 }
 

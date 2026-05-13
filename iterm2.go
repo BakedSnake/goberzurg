@@ -41,12 +41,9 @@ func (i *Iterm2Backend) Display(key string, img *Image, opts Options) error {
 	}
 
 	b64 := base64.StdEncoding.EncodeToString(scaled.Data)
-	_, err = fmt.Fprintf(i.w, "\x1b]1337;File=inline=1;size=%d;name=%s:%s\x07",
-		len(scaled.Data), name, b64)
-
-	if opts.Y > 0 && opts.X == 0 {
-		fmt.Fprintf(i.w, "\x1b[%dB", opts.Y)
-	}
+	// Move cursor to position (Y, X) before rendering
+	fmt.Fprintf(i.w, "\x1b7\x1b[%d;%dH\x1b]1337;File=inline=1;size=%d;name=%s:%s\x07\x1b8",
+		opts.Y+1, opts.X+1, len(scaled.Data), name, b64)
 
 	return err
 }
