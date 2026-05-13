@@ -66,7 +66,7 @@ make install PREFIX=$HOME/.local
 package main
 
 import (
-    "goberzurg"
+    "github.com/bakedsnake/goberzurg"
 )
 
 func main() {
@@ -91,7 +91,7 @@ r := goberzurg.New(goberzurg.WithBackend(goberzurg.NewKittyBackend()))
 ```go
 import (
     tea "github.com/charmbracelet/bubbletea"
-    "goberzurg"
+    "github.com/bakedsnake/goberzurg"
 )
 
 type model struct {
