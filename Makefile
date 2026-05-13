@@ -1,7 +1,8 @@
 BIN      := goberzurg
 PREFIX   ?= /usr/local
 BINDIR   := $(PREFIX)/bin
-MANDIR   := $(PREFIX)/share/man/man1
+MAN1DIR  := $(PREFIX)/share/man/man1
+MAN3DIR  := $(PREFIX)/share/man/man3
 
 .PHONY: all lib cli install install-cli install-man clean test
 
@@ -20,8 +21,9 @@ install-cli: cli
 	install -m 0755 $(BIN) $(DESTDIR)$(BINDIR)/$(BIN)
 
 install-man:
-	install -d $(DESTDIR)$(MANDIR)
-	install -m 0644 man/goberzurg.1 $(DESTDIR)$(MANDIR)/goberzurg.1
+	install -d $(DESTDIR)$(MAN1DIR) $(DESTDIR)$(MAN3DIR)
+	install -m 0644 man/goberzurg.1 $(DESTDIR)$(MAN1DIR)/goberzurg.1
+	install -m 0644 man/goberzurg.3 $(DESTDIR)$(MAN3DIR)/goberzurg.3
 
 test:
 	go test -v -race ./...

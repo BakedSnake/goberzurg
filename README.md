@@ -44,6 +44,22 @@ Verbose output:
 go test -v ./...
 ```
 
+### Makefile
+
+```sh
+make lib         # build the library
+make cli         # build the CLI binary
+make test        # run tests with race detector
+make install     # install CLI + man pages (PREFIX=/usr/local)
+make clean       # remove built binary
+```
+
+Install to a custom prefix:
+
+```sh
+make install PREFIX=$HOME/.local
+```
+
 ## Usage (library)
 
 ```go
@@ -160,6 +176,8 @@ Sizing (width, height) is handled programmatically in Go — images are scaled b
 
 ## Summary
 
+### Source files
+
 | File | Purpose |
 |------|---------|
 | `goberzurg.go` | Core types (`Pos`, `Size`, `Options`, `Option` funcs) |
@@ -171,6 +189,13 @@ Sizing (width, height) is handled programmatically in Go — images are scaled b
 | `detect.go` | Automatic terminal detection |
 | `cmd/goberzurg/main.go` | CLI tool |
 | `goberzurg_test.go` | Tests |
+
+### Man pages
+
+| Section | File | Content |
+|---------|------|---------|
+| 1 | `man/goberzurg.1` | CLI usage, options, stdin protocol, backends, examples |
+| 3 | `man/goberzurg.3` | Library API documentation (`Renderer`, `Image`, `Open`, `ScaleToCells`, etc.) |
 
 ## License
 

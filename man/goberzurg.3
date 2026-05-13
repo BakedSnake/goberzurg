@@ -1,0 +1,205 @@
+.TH GOBERZURG 3 "2026-05-13" "goberzurg" "Library Functions"
+.SH NAME
+goberzurg \- Go library for displaying images in terminal emulators
+.SH SYNOPSIS
+.B package goberzurg
+.SH DESCRIPTION
+.B goberzurg
+displays images in terminal emulators using graphics protocols (kitty, sixel,
+iTerm2). It provides a high-level Renderer that auto-detects the terminal
+capabilities and handles image loading, caching, and scaling.
+.P
+Zero external dependencies \(em pure Go standard library.
+.SH TYPES
+.SS Renderer
+High-level API. Created with
+.BR New (),
+images are displayed via
+.BR Display ().
+.P
+.nf
+.ta 2n
+.RS
+r := goberzurg.New()
+defer r.Close()
+r.Display("photo.png",
+    goberzurg.WithPos(5, 2),
+    goberzurg.WithSize(40, 30),
+)
+.RE
+.fi
+.SS Backend
+Interface implemented by all terminal backends:
+.P
+.nf
+.RS
+type Backend interface {
+    Display(key string, img *Image, opts Options) error
+    Clear() error
+    Close() error
+    Name() string
+}
+.RE
+.fi
+.SS Image
+Represents a loaded image with decoded pixel data:
+.P
+.nf
+.RS
+type Image struct {
+    Format  string
+    Width   int
+    Height  int
+    Data    []byte
+    Decoded image.Image
+}
+.RE
+.fi
+.SS Options
+Image display parameters:
+.P
+.nf
+.RS
+type Options struct {
+    Pos               // X, Y (column, row)
+    Size              // Width, Height (character cells)
+    ZIndex int
+}
+.RE
+.fi
+.SH FUNCTIONS
+.SS New
+.nf
+.B func New(opts ...RendererOption) *Renderer
+.fi
+.P
+Creates a Renderer with auto-detected backend. Use
+.B WithBackend
+to force a specific backend.
+.SS Open
+.nf
+.B func Open(path string) (*Image, error)
+.fi
+.P
+Loads an image from disk. Decodes PNG, JPEG, GIF via Go's
+.IR image/stdlib .
+Returns an Image with both raw data and decoded pixel buffer.
+.SS ScaleToCells
+.nf
+.B func ScaleToCells(img *Image, cellW, cellH int) (*Image, error)
+.fi
+.P
+Rescales an image to new dimensions in character cells (1 cell = 10 px).
+Uses nearest-neighbor interpolation. If one dimension is 0, aspect ratio
+is preserved. If both are 0, the original image is returned unchanged.
+.SS Detect
+.nf
+.B func Detect() Backend
+.fi
+.P
+Auto-detects the terminal backend from environment variables
+.RB ( KITTY_WINDOW_ID ,
+.BR TERM_PROGRAM ,
+.BR TERM ).
+.SS NewKittyBackend, NewSixelBackend, NewIterm2Backend
+.nf
+.B func NewKittyBackend() *KittyBackend
+.B func NewSixelBackend() *SixelBackend
+.B func NewIterm2Backend() *Iterm2Backend
+.fi
+.P
+Create specific backends. Each writes escape sequences to
+.B os.Stdout
+by default.
+.SH OPTION FUNCTIONS
+.nf
+.B func WithPos(x, y int) Option
+.B func WithSize(w, h int) Option
+.B func WithZIndex(z int) Option
+.B func WithBackend(b Backend) RendererOption
+.fi
+.P
+.B WithPos
+sets the column and row position.
+.B WithSize
+sets the width and height in character cells.
+.B WithZIndex
+sets the stacking order.
+.B WithBackend
+forces a specific backend when creating a Renderer.
+.SH BUBBLETEA INTEGRATION
+The goberzurg backend writes directly to
+.BR os.Stdout ,
+which is compatible with bubbletea's rendering pipeline:
+.P
+.nf
+.RS
+type model struct {
+    renderer *goberzurg.Renderer
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    switch msg := msg.(type) {
+    case tea.KeyMsg:
+        if msg.String() == "q" {
+            return m, tea.Quit
+        }
+    }
+    return m, nil
+}
+
+func (m model) View() string {
+    m.renderer.Display("photo.png", goberzurg.WithPos(0, 0))
+    return "Hello\\n"
+}
+
+func main() {
+    r := goberzurg.New()
+    defer r.Close()
+    tea.NewProgram(model{renderer: r}).Run()
+}
+.RE
+.fi
+.SH BACKENDS
+.TP
+Kitty
+kitty, wezterm, ghostty \(em
+.B KITTY_WINDOW_ID
+.TP
+Sixel
+xterm, mlterm, foot \(em
+.B TERM
+contains "sixel"
+.TP
+iTerm2
+iTerm2 \(em
+.B TERM_PROGRAM
+is "iTerm.app" or "iTerm2"
+.SH FILE OVERVIEW
+.TP
+goberzurg.go
+Core types: Pos, Size, Options, Option funcs
+.TP
+image.go
+Image loading, format detection, PNG/JPEG encoding, ScaleToCells
+.TP
+renderer.go
+Backend interface, Renderer high-level API
+.TP
+kitty.go
+Kitty terminal protocol backend
+.TP
+sixel.go
+Sixel graphics backend
+.TP
+iterm2.go
+iTerm2 inline images backend
+.TP
+detect.go
+Automatic terminal detection
+.SH AUTHOR
+Gil Ferrand
+.SH LICENSE
+MIT
+.SH SEE ALSO
+.BR goberzurg (1)

@@ -1,0 +1,116 @@
+.TH GOBERZURG 1 "2026-05-13" "goberzurg" "User Commands"
+.SH NAME
+goberzurg \- display images in the terminal
+.SH SYNOPSIS
+.B goberzurg
+[OPTIONS] <path> [x] [y] [width] [height]
+.br
+.B goberzurg
+[OPTIONS]
+.SH DESCRIPTION
+.B goberzurg
+displays images in terminal emulators using terminal graphics protocols
+(kitty, sixel, iTerm2). The backend is auto-detected based on environment
+variables.
+.P
+Width and height are specified in character cells and are scaled
+programmatically, producing identical results across all backends.
+.SH OPTIONS
+.TP
+.B \-\-backend <name>
+Force a specific backend (\fBkitty\fR, \fBsixel\fR, \fBiterm2\fR).
+.TP
+.B \-\-list-backends
+List available backends and exit.
+.TP
+.B \-\-help
+Display usage information and exit.
+.SH ARGUMENTS
+.TP
+path
+Path to the image file (PNG, JPEG, GIF).
+.TP
+x
+Column position (default: 0).
+.TP
+y
+Row position (default: 0).
+.TP
+width
+Width in character cells (default: 0 = auto).
+.TP
+height
+Height in character cells (default: 0 = auto).
+.SH STDIN PROTOCOL
+When invoked without positional arguments,
+.B goberzurg
+reads JSON or plain-text commands from stdin.
+.P
+JSON format:
+.RS
+.IP
+{"action":"add","path":"img.png","x":5,"y":2}
+.IP
+{"action":"clear"}
+.IP
+{"action":"quit"}
+.RE
+.P
+Plain-text format:
+.RS
+.IP
+add img.png 5 2
+.IP
+clear
+.IP
+quit
+.RE
+.P
+Commands: \fBadd\fR / \fBdisplay\fR, \fBclear\fR / \fBremove\fR, \fBquit\fR / \fBexit\fR.
+.SH BACKENDS
+.TP
+Kitty
+kitty, wezterm, ghostty (auto-detected via KITTY_WINDOW_ID)
+.TP
+Sixel
+xterm, mlterm, foot (auto-detected via TERM)
+.TP
+iTerm2
+iTerm2 (auto-detected via TERM_PROGRAM)
+.SH DETECTION PRIORITY
+.IP 1. 3
+$KITTY_WINDOW_ID  →  kitty
+.IP 2.
+$TERM_PROGRAM     →  iTerm2 / WezTerm
+.IP 3.
+$TERM (sixel)     →  sixel
+.IP 4.
+fallback          →  kitty
+.SH EXAMPLES
+.TP
+Display at column 5, row 2:
+goberzurg photo.png 5 2
+.TP
+Display with size 40x30 cells:
+goberzurg photo.png 5 2 40 30
+.TP
+Force sixel backend:
+goberzurg --backend sixel photo.png 5 2
+.TP
+Stdin JSON protocol:
+echo '{"action":"add","path":"img.png","x":5,"y":2}' | goberzurg
+.TP
+Stdin text protocol:
+echo 'add img.png 5 2 40 30' | goberzurg
+.SH FILES
+.TP
+.I /usr/local/bin/goberzurg
+CLI binary
+.SH AUTHOR
+Gil Ferrand
+.SH LICENSE
+MIT
+.SH SEE ALSO
+.IR kitty (1),
+.IR xterm (1),
+.IR iTerm2
