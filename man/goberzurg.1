@@ -49,7 +49,7 @@ reads JSON or plain-text commands from stdin.
 JSON format:
 .RS
 .IP
-{"action":"add","path":"img.png","x":5,"y":2}
+{"action":"add","path":"img.png","x":5,"y":2,"width":40,"height":30,"z":1}
 .IP
 {"action":"clear"}
 .IP
@@ -59,7 +59,7 @@ JSON format:
 Plain-text format:
 .RS
 .IP
-add img.png 5 2
+add img.png 5 2 40 30
 .IP
 clear
 .IP
@@ -79,13 +79,20 @@ iTerm2
 iTerm2 (auto-detected via TERM_PROGRAM)
 .SH DETECTION PRIORITY
 .IP 1. 3
-$KITTY_WINDOW_ID  →  kitty
+$KITTY_WINDOW_ID             →  kitty
 .IP 2.
-$TERM_PROGRAM     →  iTerm2 / WezTerm
+$TERM_PROGRAM == iTerm.app
+or iTerm2                    →  iTerm2
 .IP 3.
-$TERM (sixel)     →  sixel
+$TERM_PROGRAM == WezTerm
+or wezterm                   →  kitty
 .IP 4.
-fallback          →  kitty
+$TERM contains "sixel"
+or "xterm"                   →  sixel
+.IP 5.
+$TERM_PROGRAM set (other)    →  kitty
+.IP 6.
+fallback                     →  kitty
 .SH EXAMPLES
 .TP
 Display at column 5, row 2:
@@ -97,10 +104,10 @@ goberzurg photo.png 5 2 40 30
 Force sixel backend:
 goberzurg --backend sixel photo.png 5 2
 .TP
-Stdin JSON protocol:
-echo '{"action":"add","path":"img.png","x":5,"y":2}' | goberzurg
+Stdin JSON protocol (supports x, y, width, height, z):
+echo '{"action":"add","path":"img.png","x":5,"y":2,"width":40,"height":30,"z":1}' | goberzurg
 .TP
-Stdin text protocol:
+Stdin text protocol (supports x, y, width, height):
 echo 'add img.png 5 2 40 30' | goberzurg
 .SH FILES
 .TP

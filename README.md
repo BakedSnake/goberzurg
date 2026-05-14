@@ -8,9 +8,12 @@ A Go library for displaying images in terminal emulators, inspired by [ueberzug]
 - **Sixel** (xterm, mlterm, foot)
 - **iTerm2 inline images** (iTerm2)
 - **Auto-detection** :: picks the right backend from `$TERM`, `$TERM_PROGRAM`, `$KITTY_WINDOW_ID`
-- **Programmatic image scaling** :: resizing works identically across all backends (nearest-neighbor or bilinear)
+- **Programmatic image scaling** :: resizing works identically across all backends (nearest-neighbor)
+- **tmux support** :: auto-detects tmux and wraps escape sequences in DCS passthrough
 - **bubbletea compatible** :: backends write directly to `os.Stdout`
 - **Zero external dependencies** :: pure Go standard library
+
+Requires Go 1.26.2 or later.
 
 ## Build
 
@@ -134,16 +137,16 @@ goberzurg --backend kitty image.png 5 2
 ### stdin protocol (JSON)
 
 ```sh
-echo '{"action":"add","path":"image.png","x":5,"y":2}' | goberzurg
+echo '{"action":"add","path":"image.png","x":5,"y":2,"width":40,"height":30,"z":1}' | goberzurg
 ```
 
 Simple text format also works:
 
 ```sh
-echo 'add image.png 5 2' | goberzurg
+echo 'add image.png 5 2 40 30' | goberzurg
 ```
 
-Commands: `add` / `display`, `clear` / `remove`, `quit` / `exit`.
+Commands: `add` / `display`, `clear` / `remove`, `quit` / `exit`. JSON fields: `action`, `path`, `x`, `y`, `width`, `height`, `z`.
 
 ## Backends
 
@@ -170,6 +173,8 @@ Sizing (width, height) is handled programmatically in Go :: images are scaled be
 | `sixel.go` | Sixel graphics backend |
 | `iterm2.go` | iTerm2 inline images backend |
 | `detect.go` | Automatic terminal detection |
+| `tmux.go` | tmux DCS passthrough, `ClearOnResetWriter` |
+| `doc.go` | Package documentation |
 | `cmd/goberzurg/main.go` | CLI tool |
 | `goberzurg_test.go` | Tests |
 

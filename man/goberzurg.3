@@ -101,6 +101,23 @@ Auto-detects the terminal backend from environment variables
 .RB ( KITTY_WINDOW_ID ,
 .BR TERM_PROGRAM ,
 .BR TERM ).
+.SS DetectType
+.nf
+.B func DetectType() BackendType
+.fi
+.P
+Returns the detected backend type without instantiating a backend.
+.SS BackendType
+.nf
+.B type BackendType int
+.fi
+.P
+Constants:
+.RS
+.B BackendKitty (0),
+.B BackendSixel (1),
+.B BackendIterm2 (2)
+.RE
 .SS NewKittyBackend, NewSixelBackend, NewIterm2Backend
 .nf
 .B func NewKittyBackend() *KittyBackend
@@ -111,6 +128,38 @@ Auto-detects the terminal backend from environment variables
 Create specific backends. Each writes escape sequences to
 .B os.Stdout
 by default.
+.SS IsTmux
+.nf
+.B var IsTmux bool
+.fi
+.P
+Auto-set at init time from the
+.B TMUX
+environment variable. When true, all escape sequences are wrapped in a tmux DCS
+passthrough wrapper so images render correctly inside tmux.
+.SS NewClearOnResetWriter
+.nf
+.B func NewClearOnResetWriter(w io.Writer, clearFn func() error) *ClearOnResetWriter
+.fi
+.P
+Wraps an
+.B io.Writer
+and calls
+.B clearFn
+when a terminal clear-screen sequence (\e[2J or \e[3J) is detected. Used by all
+backends to automatically clear placed images on terminal reset.
+.SS Renderer.Backend
+.nf
+.B func (r *Renderer) Backend() Backend
+.fi
+.P
+Returns the underlying backend instance.
+.SS Renderer.Name
+.nf
+.B func (r *Renderer) Name() string
+.fi
+.P
+Returns the name of the active backend ("kitty", "sixel", or "iterm2").
 .SH OPTION FUNCTIONS
 .nf
 .B func WithPos(x, y int) Option
@@ -195,8 +244,14 @@ Sixel graphics backend
 iterm2.go
 iTerm2 inline images backend
 .TP
+doc.go
+Package-level documentation
+.TP
 detect.go
 Automatic terminal detection
+.TP
+tmux.go
+tmux DCS passthrough wrapper, \fBClearOnResetWriter\fR
 .SH AUTHOR
 Gil Ferrand
 .SH LICENSE
