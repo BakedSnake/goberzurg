@@ -10,6 +10,11 @@ import (
 	"testing"
 )
 
+func TestMain(m *testing.M) {
+	IsTmux = false
+	os.Exit(m.Run())
+}
+
 func makeTestPNG(t *testing.T) ([]byte, int, int) {
 	t.Helper()
 	img := image.NewRGBA(image.Rect(0, 0, 10, 10))

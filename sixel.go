@@ -14,7 +14,9 @@ type SixelBackend struct {
 }
 
 func NewSixelBackend() *SixelBackend {
-	return &SixelBackend{w: os.Stdout}
+	s := &SixelBackend{}
+	s.w = NewClearOnResetWriter(os.Stdout, s.Clear)
+	return s
 }
 
 func (s *SixelBackend) Name() string { return "sixel" }
@@ -34,8 +36,8 @@ func (s *SixelBackend) Display(key string, img *Image, opts Options) error {
 
 	sixelData := encodeSixel(scaled.Decoded)
 	// Move cursor to position (Y, X) before rendering sixel
-	fmt.Fprintf(s.w, "\x1b7\x1b[%d;%dH\x1bPq%s\x1b\\\x1b8",
-		opts.Y+1, opts.X+1, sixelData)
+	tmuxWrite(s.w, fmt.Sprintf("\x1b7\x1b[%d;%dH\x1bPq%s\x1b\\\x1b8",
+		opts.Y+1, opts.X+1, sixelData))
 	return err
 }
 
@@ -43,8 +45,8 @@ func (s *SixelBackend) Clear() error {
 	if s.closed {
 		return nil
 	}
-	_, err := fmt.Fprintf(s.w, "\x1bPq\x1b\\")
-	return err
+	tmuxWrite(s.w, "\x1bPq\x1b\\")
+	return nil
 }
 
 func (s *SixelBackend) Close() error {

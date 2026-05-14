@@ -19,11 +19,12 @@ type KittyBackend struct {
 }
 
 func NewKittyBackend() *KittyBackend {
-	return &KittyBackend{
-		w:        os.Stdout,
+	b := &KittyBackend{
 		imageIDs: make(map[string]uint32),
 		nextID:   1,
 	}
+	b.w = NewClearOnResetWriter(os.Stdout, b.Clear)
+	return b
 }
 
 func (k *KittyBackend) Name() string { return "kitty" }
@@ -80,7 +81,7 @@ func (k *KittyBackend) transmit(id uint32, img *Image) error {
 		id, img.Width, img.Height)
 
 	if len(b64) <= kittyChunkSize {
-		fmt.Fprintf(k.w, "\x1b_G%s,m=0;%s\x1b\\", payload, b64)
+		tmuxWrite(k.w, fmt.Sprintf("\x1b_G%s,m=0;%s\x1b\\", payload, b64))
 	} else {
 		chunks := chunkString(b64, kittyChunkSize)
 		for i, ch := range chunks {
@@ -90,9 +91,9 @@ func (k *KittyBackend) transmit(id uint32, img *Image) error {
 				m = 1
 			}
 			if i == 0 {
-				fmt.Fprintf(k.w, "\x1b_G%s,m=%d;%s\x1b\\", payload, m, ch)
+				tmuxWrite(k.w, fmt.Sprintf("\x1b_G%s,m=%d;%s\x1b\\", payload, m, ch))
 			} else {
-				fmt.Fprintf(k.w, "\x1b_Gm=%d;%s\x1b\\", m, ch)
+				tmuxWrite(k.w, fmt.Sprintf("\x1b_Gm=%d;%s\x1b\\", m, ch))
 			}
 		}
 	}
@@ -115,8 +116,8 @@ func (k *KittyBackend) place(id uint32, opts Options) error {
 
 	// The Kitty protocol places images at the cursor position.
 	// Move cursor to (Y, X) before placing (ANSI CUP is 1-indexed: row, col).
-	fmt.Fprintf(k.w, "\x1b7\x1b[%d;%dH\x1b_G%s\x1b\\\x1b8",
-		opts.Y+1, opts.X+1, cmd)
+	tmuxWrite(k.w, fmt.Sprintf("\x1b7\x1b[%d;%dH\x1b_G%s\x1b\\\x1b8",
+		opts.Y+1, opts.X+1, cmd))
 
 	return nil
 }
@@ -128,7 +129,7 @@ func (k *KittyBackend) Clear() error {
 	k.mu.Lock()
 	k.imageIDs = make(map[string]uint32)
 	k.mu.Unlock()
-	fmt.Fprintf(k.w, "\x1b_Ga=d,d=a\x1b\\")
+	tmuxWrite(k.w, "\x1b_Ga=d,d=a\x1b\\")
 	return nil
 }
 

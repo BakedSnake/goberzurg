@@ -13,7 +13,9 @@ type Iterm2Backend struct {
 }
 
 func NewIterm2Backend() *Iterm2Backend {
-	return &Iterm2Backend{w: os.Stdout}
+	i := &Iterm2Backend{}
+	i.w = NewClearOnResetWriter(os.Stdout, i.Clear)
+	return i
 }
 
 func (i *Iterm2Backend) Name() string { return "iterm2" }
@@ -42,8 +44,8 @@ func (i *Iterm2Backend) Display(key string, img *Image, opts Options) error {
 
 	b64 := base64.StdEncoding.EncodeToString(scaled.Data)
 	// Move cursor to position (Y, X) before rendering
-	fmt.Fprintf(i.w, "\x1b7\x1b[%d;%dH\x1b]1337;File=inline=1;size=%d;name=%s:%s\x07\x1b8",
-		opts.Y+1, opts.X+1, len(scaled.Data), name, b64)
+	tmuxWrite(i.w, fmt.Sprintf("\x1b7\x1b[%d;%dH\x1b]1337;File=inline=1;size=%d;name=%s:%s\x07\x1b8",
+		opts.Y+1, opts.X+1, len(scaled.Data), name, b64))
 
 	return err
 }
