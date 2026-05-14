@@ -4,15 +4,12 @@ BINDIR   := $(PREFIX)/bin
 MAN1DIR  := $(PREFIX)/share/man/man1
 MAN3DIR  := $(PREFIX)/share/man/man3
 
-.PHONY: all lib cli install install-cli install-man clean test
+.PHONY: all cli install install-cli install-man clean test
 
-all: lib cli
-
-lib:
-	go build ./...
+all: cli
 
 cli:
-	go build -o $(BIN) ./cmd/goberzurg/
+	go build -buildvcs=false -o $(BIN) ./cmd/goberzurg/
 
 install: install-cli install-man
 
@@ -26,7 +23,7 @@ install-man:
 	install -m 0644 man/goberzurg.3 $(DESTDIR)$(MAN3DIR)/goberzurg.3
 
 test:
-	go test -v -race ./...
+	go test -v -race -count=1 ./*.go
 
 clean:
 	rm -f $(BIN)
