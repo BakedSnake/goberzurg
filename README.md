@@ -1,24 +1,18 @@
 # goberzurg
 
-A Go library for displaying images in terminal emulators, inspired by [ueberzug](https://github.com/ueberzug/ueberzug). Uses terminal graphics protocols — no X11/Wayland overlays, no CGo, no external dependencies.
+A Go library for displaying images in terminal emulators, inspired by [ueberzug](https://github.com/ueberzug/ueberzug). Uses terminal graphics protocols :: no X11/Wayland overlays, no CGo, no external dependencies.
 
 ## Features
 
 - **Kitty protocol** (kitty, wezterm, ghostty)
 - **Sixel** (xterm, mlterm, foot)
 - **iTerm2 inline images** (iTerm2)
-- **Auto-detection** — picks the right backend from `$TERM`, `$TERM_PROGRAM`, `$KITTY_WINDOW_ID`
-- **Programmatic image scaling** — resizing works identically across all backends (nearest-neighbor or bilinear)
-- **bubbletea compatible** — backends write directly to `os.Stdout`
-- **Zero external dependencies** — pure Go standard library
+- **Auto-detection** :: picks the right backend from `$TERM`, `$TERM_PROGRAM`, `$KITTY_WINDOW_ID`
+- **Programmatic image scaling** :: resizing works identically across all backends (nearest-neighbor or bilinear)
+- **bubbletea compatible** :: backends write directly to `os.Stdout`
+- **Zero external dependencies** :: pure Go standard library
 
 ## Build
-
-### Library
-
-```sh
-go build ./...
-```
 
 ### CLI
 
@@ -29,19 +23,8 @@ go build -o goberzurg ./cmd/goberzurg/
 ### Tests
 
 ```sh
-go test ./...
-```
-
-With race detector:
-
-```sh
-go test -race ./...
-```
-
-Verbose output:
-
-```sh
 go test -v ./...
+go test -race ./...
 ```
 
 ### Makefile
@@ -73,7 +56,7 @@ func main() {
     r := goberzurg.New()
     defer r.Close()
 
-    r.Display("photo.png",
+    r.Display("image.png",
         goberzurg.WithPos(5, 2),       // column, row
         goberzurg.WithSize(40, 30),    // width, height in character cells
     )
@@ -127,13 +110,13 @@ func main() {
 Display an image at position (column, row):
 
 ```sh
-goberzurg photo.png 5 2
+goberzurg image.png 5 2
 ```
 
 With width and height (in character cells):
 
 ```sh
-goberzurg photo.png 5 2 40 30
+goberzurg image.png 5 2 40 30
 ```
 
 List available backends:
@@ -145,19 +128,19 @@ goberzurg --list-backends
 Force a backend:
 
 ```sh
-goberzurg --backend kitty photo.png 5 2
+goberzurg --backend kitty image.png 5 2
 ```
 
 ### stdin protocol (JSON)
 
 ```sh
-echo '{"action":"add","path":"photo.png","x":5,"y":2}' | goberzurg
+echo '{"action":"add","path":"image.png","x":5,"y":2}' | goberzurg
 ```
 
 Simple text format also works:
 
 ```sh
-echo 'add photo.png 5 2' | goberzurg
+echo 'add image.png 5 2' | goberzurg
 ```
 
 Commands: `add` / `display`, `clear` / `remove`, `quit` / `exit`.
@@ -172,7 +155,7 @@ Commands: `add` / `display`, `clear` / `remove`, `quit` / `exit`.
 
 Detection priority: `$KITTY_WINDOW_ID` → `$TERM_PROGRAM` → `$TERM` (sixel/xterm keywords) → Kitty (fallback).
 
-Sizing (width, height) is handled programmatically in Go — images are scaled before being passed to any backend. This means `WithSize(40, 30)` produces the same result on every backend regardless of terminal protocol capabilities.
+Sizing (width, height) is handled programmatically in Go :: images are scaled before being passed to any backend. This means `WithSize(40, 30)` produces the same result on every backend regardless of terminal protocol capabilities.
 
 ## Summary
 
